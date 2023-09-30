@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>20 Questions Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        #start-again {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff;
+            color: white;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #question {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #333;
+        }
+        #game-over {
+            text-align: center;
+        }
+        #play-again {
+            background-color: #28a745;
+            color: white;
+        }
+      button:active {
+            transform: translateY(4px);
+        }
+
+      #main-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black; /* Adding background color */
+        }
+
+        /* Create a box for the game */
+        #game-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-container">
+        <div id="game-box">
+            <h1>20 Questions Game</h1>
+            <div id="game-container">
+                <div id="question">Is your person alive?</div>
+                <button onclick="sendResponse('Yes')" style="background-color: #007bff; color: white;">Yes</button>
+                <button onclick="sendResponse('No')" style="background-color: #dc3545; color: white;">No</button>
+            </div>
+            <div id="game-over" style="display:none;">
+                <p>I can't guess it. What was the correct answer?</p>
+                <input type="text" id="correct-answer">
+                <button onclick="revealAnswer()" style="background-color: #ffc107; color: black;">Reveal</button>
+            </div>
+            <button id="play-again" style="display:none;" onclick="location.reload();">Play Again</button>
+            <button id="start-again" onclick="location.reload();">Start Again</button>
+        </div>
+    </div>
+
+    
+
+    <script>
+        let previousQuestions = ["Is your person alive?"];
+        let previousAnswers = [];
+        let questionCount = 1;
+        
+        async function sendResponse(response) {
+            previousAnswers.push(response);
+            const requestData = {
+                response: response,
+                previous_questions: previousQuestions,
+                previous_answers: previousAnswers,
+                question_count: questionCount
+            };
+            
+            const responseFetch = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await responseFetch.json();
+            
+            if (data.game_over) {
+                document.getElementById("game-container").style.display = "none";
+                document.getElementById("play-again").style.display = "block";
+                if(questionCount < 20) {
+                    alert("I guessed it correctly!");
+                } else {
+                    document.getElementById("game-over").style.display = "block";
+                }
+            } else {
+                const nextQuestion = data.next_question;
+                document.getElementById("question").textContent = nextQuestion;
+                previousQuestions.push(nextQuestion);
+                questionCount++;
+            }
+        }
+
+        function revealAnswer() {
+            const answer = document.getElementById("correct-answer").value;
+            alert("Thank you for revealing the answer: " + answer);
+            document.getElementById("play-again").style.display = "block";
+        }
+    </script>
+</body>
+</html>
